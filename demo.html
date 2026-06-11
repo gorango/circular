@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1" />
+	<title>Circular Font</title>
+	<style>
+		*,
+		*::before,
+		*::after {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: system-ui, sans-serif;
+			background: #111;
+			color: #ccc;
+			padding: 2rem;
+		}
+
+		h1 {
+			font-weight: 300;
+			letter-spacing: 0.05em;
+			margin-bottom: 0.25rem;
+			color: #eee;
+		}
+
+		p {
+			color: #888;
+			margin-bottom: 0.5rem;
+			font-size: 0.9rem;
+		}
+
+		.controls {
+			margin-bottom: 1.5rem;
+			display: flex;
+			gap: 0.5rem;
+		}
+
+		.controls button {
+			background: #333;
+			color: #ccc;
+			border: 1px solid #555;
+			border-radius: 6px;
+			padding: 0.4rem 0.9rem;
+			font-size: 0.85rem;
+			cursor: pointer;
+		}
+
+		.controls button:hover {
+			background: #444;
+		}
+
+		/* ⬇ everything below stays the same ⬇ */
+
+		.grid {
+			display: grid;
+			grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+			gap: 1rem;
+		}
+
+		.card {
+			background: #1a1a1a;
+			border-radius: 12px;
+			padding: 1rem 0.5rem 0.5rem;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			transition: background 0.15s;
+		}
+
+		.card:hover {
+			background: #222;
+		}
+
+		.card svg {
+			width: 100%;
+			height: auto;
+			max-width: 120px;
+		}
+
+		.card.animating {
+			background: #2a2a20;
+		}
+
+		.label {
+			margin-top: 0.25rem;
+			font-size: 0.8rem;
+			color: #888;
+			letter-spacing: 0.1em;
+			text-transform: uppercase;
+		}
+	</style>
+
+	<h1>Circular</h1>
+	<p>Click a letter to play its draw animation. Click again to reverse.</p>
+
+	<div class="controls">
+		<button type="button" id="playAll">Play All</button>
+		<button type="button" id="reverseAll">Reverse All</button>
+		<button type="button" id="pauseAll">Pause All</button>
+		<button type="button" id="resetAll">Reset</button>
+	</div>
+
+	<div class="grid" id="grid"></div>
+
+	<script type="module">
+		import { CircularFont, DEFAULT_LETTERS } from './src/index.ts'
+
+		const font = new CircularFont({ letters: DEFAULT_LETTERS })
+		const controllers = []
+
+		function render(letter) {
+			try {
+				return font.svg(letter, {
+					p: '#333',
+					s: '#666',
+					size: 256,
+				})
+			} catch {
+				return ''
+			}
+		}
+
+		const grid = document.getElementById('grid')
+		for (let ch = 65; ch <= 90; ch++) {
+			const letter = String.fromCharCode(ch)
+			const card = document.createElement('div')
+			card.className = 'card'
+			card.innerHTML = render(letter) + `<div class="label">${letter}</div>`
+			card.dataset.letter = letter
+			grid.appendChild(card)
+		}
+
+		// Click to animate
+		let active = null
+		grid.addEventListener('click', (e) => {
+			const card = e.target.closest('.card')
+			if (!card) return
+			const letter = card.dataset.letter
+			const svg = card.querySelector('svg')
+
+			if (active && active.controller) {
+				active.card.classList.remove('animating')
+				active.controller.cancel()
+			}
+
+			const ctrl = font.animate(letter, svg)
+			controllers.push(ctrl)
+			active = { card, controller: ctrl }
+			card.classList.add('animating')
+
+			ctrl.play()
+			ctrl.onComplete = () => {
+				card.classList.remove('animating')
+				active = null
+			}
+		})
+
+		// Global controls
+		document.getElementById('playAll').addEventListener('click', () => {
+			for (const c of controllers) c.play()
+		})
+		document.getElementById('reverseAll').addEventListener('click', () => {
+			for (const c of controllers) c.reverse()
+		})
+		document.getElementById('pauseAll').addEventListener('click', () => {
+			for (const c of controllers) c.pause()
+		})
+		document.getElementById('resetAll').addEventListener('click', () => {
+			for (const c of controllers) c.cancel()
+			for (const card of grid.querySelectorAll('.card')) card.classList.remove('animating')
+			controllers.length = 0
+			active = null
+		})
+	</script>
+</html>

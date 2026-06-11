@@ -1,0 +1,22 @@
+{
+	"name": "circular-font",
+	"private": true,
+	"description": "Generate circular typography SVG strings from a JSON config",
+	"files": [
+		"lib"
+	],
+	"type": "module",
+	"sideEffects": false,
+	"module": "src/index.ts",
+	"scripts": {
+		"dev": "bun --watch demo.ts",
+		"lint": "oxlint --fix . && oxfmt .",
+		"typecheck": "tsc --noEmit"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"oxfmt": "^0.54.0",
+		"oxlint": "^1.69.0",
+		"typescript": "^5.4.5"
+	}
+}
