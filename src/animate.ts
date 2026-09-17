@@ -2,8 +2,8 @@ import type {
 	AnimationController,
 	AnimateOpts,
 	AnimationStep,
-	ComponentDef,
-	LetterDef,
+	KeyframeDef,
+	AnimationChoreography,
 } from './types'
 
 // ── Internal types ───────────────────────────────────────────────────────────────
@@ -29,13 +29,13 @@ interface PhaseData {
 // ── Entry point ──────────────────────────────────────────────────────────────────
 
 export function animateLetter(
-	ldef: LetterDef,
+	choreography: AnimationChoreography,
 	svg: SVGSVGElement,
 	opts?: AnimateOpts,
 ): AnimationController {
-	const gap = opts?.phaseGap ?? 0
+	const gap = opts?.phaseGap ?? choreography.phaseGap ?? 0
 
-	const phases = buildPhases(ldef, svg)
+	const phases = buildPhases(choreography, svg)
 	const anims: Animation[] = []
 
 	let globalTime = 0
@@ -62,30 +62,29 @@ export function animateLetter(
 
 // ── Phase builder ────────────────────────────────────────────────────────────────
 
-function buildPhases(ldef: LetterDef, svg: SVGSVGElement): PhaseData[] {
-	const groups = new Map<number, { comp: ComponentDef; el: SVGElement; idx: number }[]>()
+function buildPhases(choreography: AnimationChoreography, svg: SVGSVGElement): PhaseData[] {
+	const groups = new Map<number, { sa: typeof choreography.parts[0]; el: SVGElement }[]>()
 
-	for (let i = 0; i < ldef.components.length; i++) {
-		const comp = ldef.components[i]!
-		const el = svg.querySelector(`[data-cf-index="${i}"]`)
+	for (const sa of choreography.parts) {
+		const el = svg.querySelector(`[data-cf-index="${sa.index}"]`)
 		if (!el) continue
-		const order = comp.order ?? i
+		const order = sa.order ?? sa.index
 		let group = groups.get(order)
 		if (!group) {
 			group = []
 			groups.set(order, group)
 		}
-		group.push({ comp, el: el as SVGElement, idx: i })
+		group.push({ sa, el: el as SVGElement })
 	}
 
 	const sorted = [...groups.entries()].sort(([a], [b]) => a - b)
 
-	return sorted.map(([, items]) => {
+	return sorted.map(([order, items]) => {
 		const components: ComponentAnim[] = []
 		let maxDuration = 0
 
-		for (const { comp, el } of items) {
-			const steps = resolveSteps(comp, el)
+		for (const { sa, el } of items) {
+			const steps = resolveSteps(sa.steps, el)
 			if (steps.length === 0) {
 				steps.push({
 					keyframes: [{ opacity: 0 }, { opacity: 1 }],
@@ -99,15 +98,14 @@ function buildPhases(ldef: LetterDef, svg: SVGSVGElement): PhaseData[] {
 			if (total > maxDuration) maxDuration = total
 		}
 
-		return { order: items[0]!.comp.order ?? items[0]!.idx, duration: maxDuration, components }
+		return { order, duration: maxDuration, components }
 	})
 }
 
 // ── Step resolution ─────────────────────────────────────────────────────────────
 
-function resolveSteps(comp: ComponentDef, el: SVGElement): ResolvedStep[] {
-	const steps = comp.animate
-	if (!steps || steps.length === 0) return []
+function resolveSteps(steps: AnimationStep[], el: SVGElement): ResolvedStep[] {
+	if (steps.length === 0) return []
 	return steps.map((s) => resolveStep(el, s))
 }
 
@@ -284,8 +282,6 @@ class ControllerImpl implements AnimationController {
 			if (anyActive) {
 				this._rafId = requestAnimationFrame(check)
 			} else {
-				// All animations finished but we didn't hit progress endpoint —
-				// treat as complete
 				this._progress = this._direction === 1 ? 1 : 0
 				this._playing = false
 				this.onComplete?.()

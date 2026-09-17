@@ -1,127 +1,128 @@
 <!doctype html>
 <html lang="en">
-	<meta charset="utf-8" />
-	<meta name="viewport" content="width=device-width,initial-scale=1" />
-	<title>Circular Font</title>
-	<style>
-		*,
-		*::before,
-		*::after {
-			box-sizing: border-box;
-			margin: 0;
-			padding: 0;
-		}
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Circular Font</title>
+<style>
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+		margin: 0;
+		padding: 0;
+	}
 
-		body {
-			font-family: system-ui, sans-serif;
-			background: #111;
-			color: #ccc;
-			padding: 2rem;
-		}
+	body {
+		font-family: system-ui, sans-serif;
+		background: #111;
+		color: #ccc;
+		padding: 2rem;
+	}
 
-		h1 {
-			font-weight: 300;
-			letter-spacing: 0.05em;
-			margin-bottom: 0.25rem;
-			color: #eee;
-		}
+	h1 {
+		font-weight: 300;
+		letter-spacing: 0.05em;
+		margin-bottom: 0.25rem;
+		color: #eee;
+	}
 
-		p {
-			color: #888;
-			margin-bottom: 0.5rem;
-			font-size: 0.9rem;
-		}
+	p {
+		color: #888;
+		margin-bottom: 0.5rem;
+		font-size: 0.9rem;
+	}
 
-		.controls {
-			margin-bottom: 1.5rem;
-			display: flex;
-			gap: 0.5rem;
-		}
+	.controls {
+		margin-bottom: 1.5rem;
+		display: flex;
+		gap: 0.5rem;
+	}
 
-		.controls button {
-			background: #333;
-			color: #ccc;
-			border: 1px solid #555;
-			border-radius: 6px;
-			padding: 0.4rem 0.9rem;
-			font-size: 0.85rem;
-			cursor: pointer;
-		}
+	.controls button {
+		background: #333;
+		color: #ccc;
+		border: 1px solid #555;
+		border-radius: 6px;
+		padding: 0.4rem 0.9rem;
+		font-size: 0.85rem;
+		cursor: pointer;
+	}
 
-		.controls button:hover {
-			background: #444;
-		}
+	.controls button:hover {
+		background: #444;
+	}
 
-		/* ⬇ everything below stays the same ⬇ */
+	/* ⬇ everything below stays the same ⬇ */
 
-		.grid {
-			display: grid;
-			grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-			gap: 1rem;
-		}
+	.grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+		gap: 1rem;
+	}
 
-		.card {
-			background: #1a1a1a;
-			border-radius: 12px;
-			padding: 1rem 0.5rem 0.5rem;
-			display: flex;
-			flex-direction: column;
-			align-items: center;
-			transition: background 0.15s;
-		}
+	.card {
+		background: #1a1a1a;
+		border-radius: 12px;
+		padding: 1rem 0.5rem 0.5rem;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		transition: background 0.15s;
+	}
 
-		.card:hover {
-			background: #222;
-		}
+	.card:hover {
+		background: #222;
+	}
 
-		.card svg {
-			width: 100%;
-			height: auto;
-			max-width: 120px;
-		}
+	.card svg {
+		width: 100%;
+		height: auto;
+		max-width: 120px;
+	}
 
-		.card.animating {
-			background: #2a2a20;
-		}
+	.card.animating {
+		background: #2a2a20;
+	}
 
-		.label {
-			margin-top: 0.25rem;
-			font-size: 0.8rem;
-			color: #888;
-			letter-spacing: 0.1em;
-			text-transform: uppercase;
-		}
-	</style>
+	.label {
+		margin-top: 0.25rem;
+		font-size: 0.8rem;
+		color: #888;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+	}
+</style>
 
-	<h1>Circular</h1>
-	<p>Click a letter to play its draw animation. Click again to reverse.</p>
+<h1>Circular</h1>
+<p>Click a letter to play its draw animation. Click again to reverse.</p>
 
-	<div class="controls">
-		<button type="button" id="playAll">Play All</button>
-		<button type="button" id="reverseAll">Reverse All</button>
-		<button type="button" id="pauseAll">Pause All</button>
-		<button type="button" id="resetAll">Reset</button>
-	</div>
+<div class="controls">
+	<button type="button" id="playAll">Play All</button>
+	<button type="button" id="reverseAll">Reverse All</button>
+	<button type="button" id="pauseAll">Pause All</button>
+	<button type="button" id="resetAll">Reset</button>
+</div>
 
-	<div class="grid" id="grid"></div>
+<div class="grid" id="grid"></div>
 
 	<script type="module">
-		import { CircularFont, DEFAULT_LETTERS } from './src/index.ts'
+		import {CircularFont, DEFAULT_SHAPES, DEFAULT_ANIMATIONS} from './src/index.ts'
 
-		const font = new CircularFont({ letters: DEFAULT_LETTERS })
-		const controllers = []
+		const font = new CircularFont({letters: DEFAULT_SHAPES, animations: DEFAULT_ANIMATIONS})
 
 		function render(letter) {
 			try {
 				return font.svg(letter, {
-					p: '#333',
-					s: '#666',
+					accentColor: '#666',
 					size: 256,
 				})
 			} catch {
 				return ''
 			}
 		}
+
+		// Pre-create controllers for every card
+		const cards = []
 
 		const grid = document.getElementById('grid')
 		for (let ch = 65; ch <= 90; ch++) {
@@ -131,48 +132,96 @@
 			card.innerHTML = render(letter) + `<div class="label">${letter}</div>`
 			card.dataset.letter = letter
 			grid.appendChild(card)
+
+			const svg = card.querySelector('svg')
+			const ctrl = font.animate(letter, svg)
+			cards.push({card, ctrl})
 		}
 
-		// Click to animate
+		// Single-click: play or cancel this letter
 		let active = null
 		grid.addEventListener('click', (e) => {
 			const card = e.target.closest('.card')
 			if (!card) return
-			const letter = card.dataset.letter
-			const svg = card.querySelector('svg')
 
-			if (active && active.controller) {
-				active.card.classList.remove('animating')
-				active.controller.cancel()
+			const entry = cards.find((c) => c.card === card)
+			if (!entry) return
+
+			// Clicking the same card again cancels
+			if (active?.card === card) {
+				card.classList.remove('animating')
+				active.ctrl.cancel()
+				active = null
+				return
 			}
 
-			const ctrl = font.animate(letter, svg)
-			controllers.push(ctrl)
-			active = { card, controller: ctrl }
-			card.classList.add('animating')
+			// Cancel any previous
+			if (active) {
+				active.card.classList.remove('animating')
+				active.ctrl.cancel()
+			}
 
-			ctrl.play()
-			ctrl.onComplete = () => {
+			card.classList.add('animating')
+			entry.ctrl.seek(0)
+			entry.ctrl.play()
+			active = {card, ctrl: entry.ctrl}
+
+			entry.ctrl.onComplete = () => {
 				card.classList.remove('animating')
-				active = null
+				if (active?.card === card) active = null
 			}
 		})
 
 		// Global controls
 		document.getElementById('playAll').addEventListener('click', () => {
-			for (const c of controllers) c.play()
+			if (active) {
+				active.card.classList.remove('animating')
+				active.ctrl.cancel()
+				active = null
+			}
+			for (const entry of cards) {
+				if (entry.ctrl.playing) entry.ctrl.cancel()
+				entry.card.classList.add('animating')
+				entry.ctrl.seek(0)
+				entry.ctrl.play()
+				entry.ctrl.onComplete = () => {
+					entry.card.classList.remove('animating')
+					if (active?.card === entry.card) active = null
+				}
+			}
 		})
+
 		document.getElementById('reverseAll').addEventListener('click', () => {
-			for (const c of controllers) c.reverse()
+			if (active) {
+				active.card.classList.remove('animating')
+				active.ctrl.cancel()
+				active = null
+			}
+			for (const entry of cards) {
+				if (!entry.ctrl.playing) {
+					entry.card.classList.add('animating')
+					entry.ctrl.seek(1)
+				}
+				entry.ctrl.reverse()
+				if (!entry.ctrl.playing) entry.ctrl.play()
+				entry.ctrl.onComplete = () => {
+					entry.card.classList.remove('animating')
+					if (active?.card === entry.card) active = null
+				}
+			}
 		})
+
 		document.getElementById('pauseAll').addEventListener('click', () => {
-			for (const c of controllers) c.pause()
+			for (const entry of cards) entry.ctrl.pause()
 		})
+
 		document.getElementById('resetAll').addEventListener('click', () => {
-			for (const c of controllers) c.cancel()
-			for (const card of grid.querySelectorAll('.card')) card.classList.remove('animating')
-			controllers.length = 0
+			for (const entry of cards) {
+				entry.ctrl.cancel()
+				entry.card.classList.remove('animating')
+			}
 			active = null
 		})
 	</script>
+
 </html>
